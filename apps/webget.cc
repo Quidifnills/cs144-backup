@@ -7,18 +7,29 @@
 using namespace std;
 
 void get_URL(const string &host, const string &path) {
-    // Your code here.
+    // 1) 建立 TCP 连接到 host:80（“http” 等价于端口 80）
+    TCPSocket sock;
+    sock.connect( Address( host, "http" ) );
 
-    // You will need to connect to the "http" service on
-    // the computer whose name is in the "host" string,
-    // then request the URL path given in the "path" string.
+    // 2) 组装 HTTP/1.1 请求报文（行尾必须是 \r\n）
+    string request;
+    request += "GET " + path + " HTTP/1.1\r\n";
+    request += "Host: " + host + "\r\n";
+    request += "Connection: close\r\n";
+    request += "\r\n";               // 空行表示请求头结束（没有请求体）
 
-    // Then you'll need to print out everything the server sends back,
-    // (not just one call to read() -- everything) until you reach
-    // the "eof" (end of file).
+    // 3) 发送请求
+    sock.write( request );
 
-    cerr << "Function called: get_URL(" << host << ", " << path << ").\n";
-    cerr << "Warning: get_URL() has not been implemented yet.\n";
+    // 4) 读取服务器的全部响应直到 EOF，并打印到标准输出
+    while ( !sock.eof() ) {
+        string chunk;
+        sock.read(chunk);    // Minnow 的 FileDescriptor 接口：读到尽可能多的数据
+        cout << chunk;
+    }
+
+    // cerr << "Function called: get_URL(" << host << ", " << path << ").\n";
+    // cerr << "Warning: get_URL() has not been implemented yet.\n";
 }
 
 int main(int argc, char *argv[]) {

@@ -1,7 +1,7 @@
 #include "address.hh"
 
 #include "util.hh"
-
+#include <array>
 #include <arpa/inet.h>
 #include <cstring>
 #include <memory>
