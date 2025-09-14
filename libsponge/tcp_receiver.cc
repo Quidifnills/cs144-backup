@@ -19,18 +19,20 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
     }
     // 2) 计算 checkpoint（绝对序号坐标系下“附近”的参考点）
     //    = 已经写入到ByteStream的字节数 + 1(因为SYN占一个序号格)
+    //    只收到SYN时: checkpoint = 0 + 1 = 1
+    //    seqno -> absolute seqno
     const uint64_t checkpoint = _reassembler.stream_out().bytes_written() + 1;
 
     // 3) 把 32-bit seqno 解包成 64-bit 绝对序号（对应段头序号）
     const uint64_t header_abs = unwrap(header.seqno, _isn, checkpoint);
 
     // 4) 该段payload的首字节对应的 stream index（不含SYN，所以要 -1；若带SYN，再+1）
-    //    data_first = header_abs - 1 + (h.syn ? 1 : 0)
-    const uint64_t data_first = header_abs + (header.syn ? 1 : 0) - 1;
+    //    absolute seqno -> stream index
+    const uint64_t steam_index = header_abs + (header.syn ? 1 : 0) - 1;
 
     // 5) 取出payload，投喂 Reassembler。若带FIN，告诉reassembler这是最后位置。
     const string payload = seg.payload().copy();
-    _reassembler.push_substring(payload, data_first, header.fin);
+    _reassembler.push_substring(payload, steam_index, header.fin);
 }
 
 optional<WrappingInt32> TCPReceiver::ackno() const { 
