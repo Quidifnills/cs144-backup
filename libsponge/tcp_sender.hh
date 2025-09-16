@@ -5,7 +5,7 @@
 #include "tcp_config.hh"
 #include "tcp_segment.hh"
 #include "wrapping_integers.hh"
-
+#include <map>
 #include <functional>
 #include <queue>
 
@@ -32,6 +32,26 @@ class TCPSender {
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
 
+    // My private class memberss
+    
+    uint64_t _highest_acked = 0; //目前已确认的最右绝对序号（ACK 左闭右开语义）。
+
+    std::map<size_t, TCPSegment> _outstanding_segments{};
+    // std::deque<TCPSegment> _outstanding_segments;
+
+    size_t _bytes_in_flight = 0;
+
+    uint16_t _received_window = 1;
+
+    unsigned int _consecutive_retx = 0;
+
+    size_t _current_retransmission_timeout = 0;
+
+    size_t _timeout_count = 0;
+
+    bool _syn_sent= false, _fin_sent = false;
+  
+  
   public:
     //! Initialize a TCPSender
     TCPSender(const size_t capacity = TCPConfig::DEFAULT_CAPACITY,
