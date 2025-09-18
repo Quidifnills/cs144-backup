@@ -55,6 +55,14 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
     }
 
     // 判断 TCP 断开连接时是否时需要等待
+    // Handle the linger_after_streams_finish flag
+    // If inbound stream ends before we've sent FIN, don't linger
+    // Peer has ended: _receiver.stream_out().input_ended() = true
+    // We have not ended: _sender.stream_in().eof() = true
+    //
+    // if (_receiver.stream_out().input_ended() && !_sender.stream_in().eof()) {
+    //     _linger_after_streams_finish = false;
+    // }
     // CLOSE_WAIT
     if (TCPState::state_summary(_receiver) == TCPReceiverStateSummary::FIN_RECV &&
         TCPState::state_summary(_sender) == TCPSenderStateSummary::SYN_ACKED)
@@ -67,14 +75,7 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
         _active = false;
         return;
     }
-    // Handle the linger_after_streams_finish flag
-    // If inbound stream ends before we've sent FIN, don't linger
-    // Peer has ended: _receiver.stream_out().input_ended() = true
-    // We have not ended: _sender.stream_in().eof() = true
-    if (_receiver.stream_out().input_ended() && !_sender.stream_in().eof()) {
-        _linger_after_streams_finish = false;
-    }
-
+    
     // if (seg.length_in_sequence_space() > 0 && _sender.segments_out().empty()) {
     //     _sender.send_empty_segment();
     // }
