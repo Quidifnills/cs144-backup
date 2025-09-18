@@ -4,10 +4,10 @@
 #include "ethernet_frame.hh"
 #include "tcp_over_ip.hh"
 #include "tun.hh"
-
+#include <list>
 #include <optional>
 #include <queue>
-
+#include <map>
 //! \brief A "network interface" that connects IP (the internet layer, or network layer)
 //! with Ethernet (the network access layer, or link layer).
 
@@ -39,6 +39,31 @@ class NetworkInterface {
 
     //! outbound queue of Ethernet frames that the NetworkInterface wants sent
     std::queue<EthernetFrame> _frames_out{};
+    
+    struct arp_entry
+    {
+      EthernetAddress eth_addr;
+      size_t ttl;
+    };
+    static constexpr size_t ARP_TTL_MS = 30 * 1000;  // 30 seconds
+    static constexpr size_t ARP_COOLDOWN_MS = 5 * 1000; // 5 seconds
+
+    std::map<uint32_t, arp_entry> _arp_table{};
+
+    //! 正在查询的 ARP 报文。如果发送了 ARP 请求后，在过期时间内没有返回响应，则丢弃等待的 IP 报文
+    std::map<uint32_t, size_t> _arp_request_time{};
+
+    //! 等待 ARP 报文返回的待处理 IP 报文
+    struct queued_datagram {
+        InternetDatagram datagram;
+        Address next_hop;
+        
+        queued_datagram(const InternetDatagram& dgram, const Address& hop) 
+            : datagram(dgram), next_hop(hop) {}
+    };
+    
+    //! Queue of datagrams waiting for ARP resolution
+    std::list<queued_datagram> _waiting_datagrams{};
 
   public:
     //! \brief Construct a network interface with given Ethernet (network-access-layer) and IP (internet-layer) addresses
