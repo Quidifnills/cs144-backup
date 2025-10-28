@@ -1,3 +1,11 @@
+Personal implementation of CS144 Project 
+
+Implemented a reliable in-memory ByteStream and a TCP Reassembler to convert unordered network datagrams into an ordered byte stream, ensuring correctness and efficiency under limited memory capacity.
+
+Developed a mini web client (“webget”) using Linux TCP sockets to fetch webpages and experimented with raw Internet datagram transmission using custom C++ socket programming.
+
+---
+
 For build prereqs, see [the CS144 VM setup instructions](https://web.stanford.edu/class/cs144/vm_howto).
 
 ## Sponge quickstart
